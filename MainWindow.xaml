@@ -1,0 +1,17 @@
+﻿<Window xmlns:awe="http://schemas.awesomium.com/winfx"  x:Class="PageKeeper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PageKeeper"
+        mc:Ignorable="d"
+        Name="window"
+        Title="PageKeeper" Height="350" Width="400" Closing="window_Closing" SizeChanged="window_SizeChanged">
+    <StackPanel Name="stackPanel">
+        <TextBox x:Name="textBox" Height="23" TextWrapping="Wrap" Text="URL:" 
+    		Background="Black" 
+    		Foreground="#FFE8E8E8" 
+    		KeyUp="textBox_KeyUp" />
+        <awe:WebControl Name="browser" Height="297" />
+    </StackPanel>
+</Window>
