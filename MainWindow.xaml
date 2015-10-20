@@ -6,12 +6,13 @@
         xmlns:local="clr-namespace:PageKeeper"
         mc:Ignorable="d"
         Name="window"
-        Title="PageKeeper" Height="350" Width="400" Closing="window_Closing" SizeChanged="window_SizeChanged">
+        Title="PageKeeper" Height="350" Width="400" Closing="window_Closing" SizeChanged="window_SizeChanged" ScrollViewer.PanningMode="Both">
     <StackPanel Name="stackPanel">
-        <TextBox x:Name="textBox" Height="23" TextWrapping="Wrap" Text="URL:" 
+        <TextBox x:Name="textBox" Height="23" Text="URL:" 
     		Background="Black" 
     		Foreground="#FFE8E8E8" 
     		KeyUp="textBox_KeyUp" />
-        <awe:WebControl Name="browser" Height="297" />
+        <!--<awe:WebControl Name="browser" Loaded="browser_Loaded" ViewType="Window" AdjustToDpi="True" AllowDrop="True"  />-->
+        <WebBrowser Name="browser" AllowDrop="True" />
     </StackPanel>
 </Window>

@@ -46,23 +46,37 @@ namespace PageKeeper
             WebCore.Initialize(config);
             InitializeComponent();
 
-            SetupTrayFavicon(DefaultUrl);
-
             textBox.Text = DefaultUrl.ToString();
-            Navigate();
+            Navigate(DefaultUrl);
         }
 
-        private void SetupTrayFavicon(Uri pageUri)
+        private void Navigate(Uri uri)
         {
+            browser.Source = new Uri(uri.ToString());
+            SetTrayFavicon(uri);
+        }
+
+        private void SetTrayFavicon(Uri pageUri)
+        {            
             var html = GetHtml(pageUri);
             var uri = GetFavIconUri(pageUri, html);            
             var tempPath = Path.GetTempFileName() + ".ico";
             var client = new WebClient();
             client.DownloadFile(uri, tempPath);
+            Icon icon = null;
+            try
+            {
+                icon = new Icon(tempPath);
+            }
+            catch (Exception)
+            {
+                icon = new Icon("default.ico");
+            }
+
 
             TrayIcon = new NotifyIcon()
             {
-                Icon = new Icon(tempPath),
+                Icon = icon,
                 Visible = true,
                 ContextMenu = new ContextMenu(new MenuItem[]
                 {
@@ -76,7 +90,7 @@ namespace PageKeeper
                 Show();
             };
         }
-
+         
         private string GetHtml(Uri uri)
         {
             string html = null;
@@ -123,7 +137,7 @@ namespace PageKeeper
             {
                 try
                 {
-                    Navigate();
+                    Navigate(new Uri(textBox.Text));
                 }
                 catch (Exception ex)
                 {
@@ -132,24 +146,18 @@ namespace PageKeeper
                 
                 e.Handled = true;                
             }
-        }
-
-        public void Navigate()
-        {
-            browser.Source = new Uri(textBox.Text);
-            browser.Focus();
-        }
+        }        
 
         private void window_Closing(object sender, CancelEventArgs e)
         {                        
             e.Cancel = true;
             Hide();
         }
-
+        
         private void window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            browser.Height = window.Height - textBox.Height;
             browser.Width = window.Width;
+            browser.Height = window.Height - textBox.Height;
         }
     }
 }
