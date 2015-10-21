@@ -5,14 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PageKeeper"
         mc:Ignorable="d"
-        Name="window"
-        Title="PageKeeper" Height="350" Width="400" Closing="window_Closing" SizeChanged="window_SizeChanged" ScrollViewer.PanningMode="Both">
-    <StackPanel Name="stackPanel">
-        <TextBox x:Name="textBox" Height="23" Text="URL:" 
-    		Background="Black" 
-    		Foreground="#FFE8E8E8" 
-    		KeyUp="textBox_KeyUp" />
-        <!--<awe:WebControl Name="browser" Loaded="browser_Loaded" ViewType="Window" AdjustToDpi="True" AllowDrop="True"  />-->
-        <WebBrowser Name="browser" AllowDrop="True" />
-    </StackPanel>
+        Name="winMain"
+        Title="PageKeeper" 
+        Height="350" Width="500" 
+        Closing="window_Closing">
+    <DockPanel Name="stackPanel" LastChildFill="True">
+        <TextBox x:Name="txtUrl" 
+                 Height="25" Background="Black" Foreground="#FFE8E8E8" 
+                 DockPanel.Dock="Top"
+                 KeyUp="textBox_KeyUp"/>
+        <awe:WebControl Name="webMain"/>
+    </DockPanel>
 </Window>

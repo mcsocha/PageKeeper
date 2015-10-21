@@ -41,61 +41,62 @@ namespace PageKeeper
         }
 
         public MainWindow()
-        {            
-            var config = new WebConfig { };
-            WebCore.Initialize(config);
+        {
+            WebCore.Initialize(new WebConfig(), true);
             InitializeComponent();
 
-            textBox.Text = DefaultUrl.ToString();
+            txtUrl.Text = DefaultUrl.ToString();
             Navigate(DefaultUrl);
         }
 
         private void Navigate(Uri uri)
         {
-            browser.Source = new Uri(uri.ToString());
-            SetTrayFavicon(uri);
+            webMain.Source = new Uri(uri.ToString());
+            SetTrayIcon(uri);
         }
 
-        private void SetTrayFavicon(Uri pageUri)
-        {            
-            var html = GetHtml(pageUri);
-            var uri = GetFavIconUri(pageUri, html);            
-            var tempPath = Path.GetTempFileName() + ".ico";
-            var client = new WebClient();
-            client.DownloadFile(uri, tempPath);
+        private void SetTrayIcon(Uri pageUri)
+        {
             Icon icon = null;
-            try
+            var html = GetHtml(pageUri);
+            if (!string.IsNullOrWhiteSpace(html))
             {
-                icon = new Icon(tempPath);
-            }
-            catch (Exception)
-            {
-                icon = new Icon("default.ico");
+                var uri = GetFavIconUri(pageUri, html);                
+
+                if (uri != null)
+                {
+                    var tempFilename = Path.GetFileNameWithoutExtension(Path.GetTempFileName());
+                    var tempPath = string.Format("{0}.ico", tempFilename);
+
+                    new WebClient().DownloadFile(uri, tempPath);
+                    icon = new Icon(tempPath);
+                }
             }
 
-
+            var restoreMenuItem = new MenuItem("Restore", (s, a) => Show(), Shortcut.None);
+            var exitMenuItem = new MenuItem("Exit", (s, a) => CloseNoTray(), Shortcut.None);
             TrayIcon = new NotifyIcon()
             {
-                Icon = icon,
+                Icon = icon != null ? icon : new Icon("default.ico"),
                 Visible = true,
-                ContextMenu = new ContextMenu(new MenuItem[]
-                {
-                    new MenuItem("Restore", (s, a) => Show(), Shortcut.None),
-                    new MenuItem("Exit", (s, a) => CloseNoTray(), Shortcut.None)
-                }),
+                ContextMenu = new ContextMenu(new MenuItem[] { restoreMenuItem, exitMenuItem }),
                 Text = "PageKeeper"
             };
-            TrayIcon.DoubleClick += (sender, args) =>
-            {
-                Show();
-            };
+            TrayIcon.DoubleClick += (sender, args) => Show();
         }
          
         private string GetHtml(Uri uri)
         {
             string html = null;
-            var client = new HttpClient();
-            html = client.GetStringAsync(uri).Result;
+
+            try
+            {
+                html = new HttpClient().GetStringAsync(uri).Result;
+            }
+            catch (Exception)
+            {   
+            }
+
             return html;
         }
 
@@ -103,21 +104,25 @@ namespace PageKeeper
         {
             Uri uri = null;
             try
-            {
+            {                
                 var linkRegex = new Regex(@"<link.*rel=""shortcut icon"".*>");
                 var link = linkRegex.Match(html);
-                var hrefRegex = new Regex(@"(?<=href="").*(?="")");
-                var href = hrefRegex.Match(link.ToString());
-                var url = href.ToString().ToLower();
-
-                if (!string.IsNullOrWhiteSpace(url) && url[0] == '/')
+                if (link.Success)
                 {
-                    var baseUri = new Uri(string.Format("{0}://{1}", pageUri.Scheme, pageUri.Host));
-                    uri = new Uri(baseUri, url.Substring(1));
+                    var hrefRegex = new Regex(@"(?<=href="").*(?="")");
+                    var href = hrefRegex.Match(link.ToString());
+                    if (href.Success)
+                    {
+                        var url = href.ToString().ToLower();
+                        if (url[0] == '/')
+                        {
+                            var baseUri = new Uri(string.Format("{0}://{1}", pageUri.Scheme, pageUri.Host));
+                            uri = new Uri(baseUri, url.Substring(1));
+                        }
+                        else if (url.Contains("http"))
+                            uri = new Uri(url);
+                    }
                 }
-                else if (url.Contains("http"))
-                    uri = new Uri(url);
-
             }
             catch (Exception)
             {
@@ -137,7 +142,7 @@ namespace PageKeeper
             {
                 try
                 {
-                    Navigate(new Uri(textBox.Text));
+                    Navigate(new Uri(txtUrl.Text));
                 }
                 catch (Exception ex)
                 {
@@ -152,12 +157,6 @@ namespace PageKeeper
         {                        
             e.Cancel = true;
             Hide();
-        }
-        
-        private void window_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            browser.Width = window.Width;
-            browser.Height = window.Height - textBox.Height;
         }
     }
 }
