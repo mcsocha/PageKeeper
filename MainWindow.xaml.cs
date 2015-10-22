@@ -58,20 +58,20 @@ namespace PageKeeper
         private void SetTrayIcon(Uri pageUri)
         {
             Icon icon = null;
-            var html = GetHtml(pageUri);
-            if (!string.IsNullOrWhiteSpace(html))
+            var uri = GetFavIconUri(pageUri);
+            if (uri != null)
             {
-                var uri = GetFavIconUri(pageUri, html);                
+                var tempFilePath = string.Format("{0}.ico", Path.GetTempFileName());
 
-                if (uri != null)
+                new WebClient().DownloadFile(uri, tempFilePath);
+                try
                 {
-                    var tempFilename = Path.GetFileNameWithoutExtension(Path.GetTempFileName());
-                    var tempPath = string.Format("{0}.ico", tempFilename);
-
-                    new WebClient().DownloadFile(uri, tempPath);
-                    icon = new Icon(tempPath);
+                    icon = new Icon(tempFilePath);
                 }
-            }
+                catch (Exception)
+                {
+                }                
+            }            
 
             var restoreMenuItem = new MenuItem("Restore", (s, a) => Show(), Shortcut.None);
             var exitMenuItem = new MenuItem("Exit", (s, a) => CloseNoTray(), Shortcut.None);
@@ -83,46 +83,15 @@ namespace PageKeeper
                 Text = "PageKeeper"
             };
             TrayIcon.DoubleClick += (sender, args) => Show();
-        }
-         
-        private string GetHtml(Uri uri)
-        {
-            string html = null;
+        }        
 
-            try
-            {
-                html = new HttpClient().GetStringAsync(uri).Result;
-            }
-            catch (Exception)
-            {   
-            }
 
-            return html;
-        }
-
-        private Uri GetFavIconUri(Uri pageUri, string html)
+        private Uri GetFavIconUri(Uri pageUri)
         {
             Uri uri = null;
             try
-            {                
-                var linkRegex = new Regex(@"<link.*rel=""shortcut icon"".*>");
-                var link = linkRegex.Match(html);
-                if (link.Success)
-                {
-                    var hrefRegex = new Regex(@"(?<=href="").*(?="")");
-                    var href = hrefRegex.Match(link.ToString());
-                    if (href.Success)
-                    {
-                        var url = href.ToString().ToLower();
-                        if (url[0] == '/')
-                        {
-                            var baseUri = new Uri(string.Format("{0}://{1}", pageUri.Scheme, pageUri.Host));
-                            uri = new Uri(baseUri, url.Substring(1));
-                        }
-                        else if (url.Contains("http"))
-                            uri = new Uri(url);
-                    }
-                }
+            {
+                uri = new Uri(string.Format("http://www.google.com/s2/favicons?domain={0}", pageUri.ToString()));
             }
             catch (Exception)
             {
