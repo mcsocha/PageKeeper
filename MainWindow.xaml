@@ -7,13 +7,11 @@
         mc:Ignorable="d"
         Name="winMain"
         Title="PageKeeper" 
-        Height="350" Width="500" 
-        Closing="window_Closing">
+        Height="350" Width="500">
     <DockPanel Name="stackPanel" LastChildFill="True">
         <TextBox x:Name="txtUrl" 
                  Height="25" Background="Black" Foreground="#FFE8E8E8" 
-                 DockPanel.Dock="Top"
-                 KeyUp="textBox_KeyUp"/>
+                 DockPanel.Dock="Top"/>
         <awe:WebControl Name="webMain"/>
     </DockPanel>
 </Window>

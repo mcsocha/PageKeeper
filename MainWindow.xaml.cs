@@ -39,14 +39,44 @@ namespace PageKeeper
                 return defaultUrl;
             }
         }
+        public bool Exit { get; set; }
 
         public MainWindow()
         {
             WebCore.Initialize(new WebConfig(), true);
             InitializeComponent();
 
+            Exit = false;
+            txtUrl.KeyUp += TxtUrl_KeyUp;
+            winMain.Closing += WinMain_Closing;
             txtUrl.Text = DefaultUrl.ToString();
             Navigate(DefaultUrl);
+        }
+
+        private void WinMain_Closing(object sender, CancelEventArgs e)
+        {
+            if (!Exit)
+            {
+                e.Cancel = true;
+                Hide();
+            }
+        }
+
+        private void TxtUrl_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                try
+                {
+                    Navigate(new Uri(txtUrl.Text));
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(this, ex.Message, "Browser Error", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+
+                e.Handled = true;
+            }
         }
 
         private void Navigate(Uri uri)
@@ -74,17 +104,20 @@ namespace PageKeeper
             }            
 
             var restoreMenuItem = new MenuItem("Restore", (s, a) => Show(), Shortcut.None);
-            var exitMenuItem = new MenuItem("Exit", (s, a) => CloseNoTray(), Shortcut.None);
+            var exitMenuItem = new MenuItem("Exit", (s, a) => { Exit = true; Close(); }, Shortcut.None);
+            var title = pageUri.ToString() + " - PageKeeper";
+            if (title.Length > 63)
+                title = title.Substring(0, 63);
+
             TrayIcon = new NotifyIcon()
             {
                 Icon = icon != null ? icon : new Icon("default.ico"),
                 Visible = true,
                 ContextMenu = new ContextMenu(new MenuItem[] { restoreMenuItem, exitMenuItem }),
-                Text = "PageKeeper"
+                Text = title,
             };
             TrayIcon.DoubleClick += (sender, args) => Show();
         }        
-
 
         private Uri GetFavIconUri(Uri pageUri)
         {
@@ -98,34 +131,6 @@ namespace PageKeeper
             }
 
             return uri;
-        }
-
-        private void CloseNoTray()
-        {
-            Environment.Exit(0);
-        }
-
-        private void textBox_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if(e.Key == Key.Enter)
-            {
-                try
-                {
-                    Navigate(new Uri(txtUrl.Text));
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show(this, ex.Message, "Browser Error", MessageBoxButton.OK, MessageBoxImage.Information, MessageBoxResult.OK);
-                }
-                
-                e.Handled = true;                
-            }
-        }        
-
-        private void window_Closing(object sender, CancelEventArgs e)
-        {                        
-            e.Cancel = true;
-            Hide();
         }
     }
 }
