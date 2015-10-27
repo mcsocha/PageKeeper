@@ -3,14 +3,9 @@ using System;
 using System.ComponentModel;
 using System.Configuration;
 using System.Drawing;
-using System.Net.Http;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
-using System.Xml.Linq;
-using System.Linq;
-using System.Xml;
-using System.Text.RegularExpressions;
 using System.IO;
 using System.Net;
 
@@ -22,7 +17,7 @@ namespace PageKeeper
 
         private Uri defaultUrl;
         public Uri DefaultUrl
-        {   
+        {
             get
             {
                 if (defaultUrl == null)
@@ -34,14 +29,15 @@ namespace PageKeeper
                     catch (Exception e)
                     {
                         throw new Exception("Default URL is in the incorrect format", e);
-                    }                    
+                    }
                 }
                 return defaultUrl;
             }
         }
+
         public bool Exit { get; set; }
 
-        public MainWindow()
+        public MainWindow(Uri startUri = null)
         {
             WebCore.Initialize(new WebConfig(), true);
             InitializeComponent();
@@ -49,8 +45,11 @@ namespace PageKeeper
             Exit = false;
             txtUrl.KeyUp += TxtUrl_KeyUp;
             winMain.Closing += WinMain_Closing;
-            txtUrl.Text = DefaultUrl.ToString();
-            Navigate(DefaultUrl);
+            Uri link = startUri == null ? DefaultUrl : startUri;
+
+            txtUrl.Text = link.ToString(); 
+            Navigate(link);
+            
         }
 
         private void WinMain_Closing(object sender, CancelEventArgs e)
@@ -61,27 +60,33 @@ namespace PageKeeper
                 Hide();
             }
         }
-
+        
         private void TxtUrl_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
             {
                 try
                 {
-                    Navigate(new Uri(txtUrl.Text));
+                    e.Handled = true;
+                    var url = txtUrl.Text.ToLower();
+                    if (!url.Contains("http://") && !url.Contains("https://"))
+                        url = string.Format("http://{0}", url);
+                    txtUrl.Text = url;
+                    Navigate(new Uri(url));
                 }
                 catch (Exception ex)
                 {
-                    System.Windows.MessageBox.Show(this, ex.Message, "Browser Error", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-
-                e.Handled = true;
+                    var winError = new BrowserError(ex.Message);
+                    winError.Owner = this;
+                    winError.ShowDialog();
+                }                
             }
         }
 
         private void Navigate(Uri uri)
         {
             webMain.Source = new Uri(uri.ToString());
+            Title = uri.Host.Replace("www.", "").Replace("/", "") + " - PageKeeper";
             SetTrayIcon(uri);
         }
 
@@ -100,24 +105,28 @@ namespace PageKeeper
                 }
                 catch (Exception)
                 {
-                }                
-            }            
+                }
+            }
 
             var restoreMenuItem = new MenuItem("Restore", (s, a) => Show(), Shortcut.None);
             var exitMenuItem = new MenuItem("Exit", (s, a) => { Exit = true; Close(); }, Shortcut.None);
             var title = pageUri.ToString() + " - PageKeeper";
             if (title.Length > 63)
                 title = title.Substring(0, 63);
-
-            TrayIcon = new NotifyIcon()
+            if (TrayIcon == null)
             {
-                Icon = icon != null ? icon : new Icon("default.ico"),
-                Visible = true,
-                ContextMenu = new ContextMenu(new MenuItem[] { restoreMenuItem, exitMenuItem }),
-                Text = title,
-            };
-            TrayIcon.DoubleClick += (sender, args) => Show();
-        }        
+                TrayIcon = new NotifyIcon()
+                {
+                    Icon = icon != null ? icon : new Icon("default.ico"),
+                    Visible = true,
+                    ContextMenu = new ContextMenu(new MenuItem[] { restoreMenuItem, exitMenuItem }),
+                    Text = title,
+                };
+                TrayIcon.DoubleClick += (sender, args) => Show();
+            }
+            else
+                TrayIcon.Text = Title;
+        }
 
         private Uri GetFavIconUri(Uri pageUri)
         {

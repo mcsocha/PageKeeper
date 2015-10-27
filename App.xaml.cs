@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Navigation;
 using System.Windows.Threading;
 
 namespace PageKeeper
@@ -16,12 +12,18 @@ namespace PageKeeper
     {
         private void Application_Startup(object sender, StartupEventArgs args)
         {
-            // Global exception handling  
-            Application.Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler((object exSender, DispatcherUnhandledExceptionEventArgs exArgs) =>
+            Current.DispatcherUnhandledException += new DispatcherUnhandledExceptionEventHandler((object exSender, DispatcherUnhandledExceptionEventArgs exArgs) =>
             {
                 MessageBox.Show("Unhandled Exception: " + exArgs.Exception.Message + "\n\n");
                 exArgs.Handled = true;
             });
+
+            Uri startUri = null;
+            if (args.Args.Length > 0)
+                startUri = new Uri(args.Args[0]);
+
+            var win = new MainWindow(startUri);
+            win.Show();
         }
     }
 }
